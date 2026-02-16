@@ -1,61 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>NuriSnack Report</title>
-
-    <style>
-        .tab { margin: 10px; }
-        .tab-content { display: none; }
-        .active { display: block; }
-    </style>
+    <title>Nuri Snack</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-    <div class="tabs">
-        <button class="tab" onclick="openTab('laporan')">Laporan</button>
-        <!-- Existing tabs go here -->
+    <h1>Welcome to Nuri Snack</h1>
+    <!-- New Reports Tab -->
+    <div id="reports">
+        <h2>Laporan (Reports)</h2>
+        <ul>
+            <li><button onclick="showReport('daily')">Daily Report</button></li>
+            <li><button onclick="showReport('weekly')">Weekly Report</button></li>
+            <li><button onclick="showReport('monthly')">Monthly Report</button></li>
+            <li><button onclick="showReport('product')">Product Report</button></li>
+            <li><button onclick="showReport('paymentMethod')">Payment Method Report</button></li>
+        </ul>
+        <button onclick="exportToPDF()">Export to PDF</button>
+        <button onclick="exportToExcel()">Export to Excel</button>
     </div>
-    
-    <div id="laporan" class="tab-content">
-        <h2>Laporan</h2>
-        <div>
-            <button onclick="generateReport('daily')">Daily Report</button>
-            <button onclick="generateReport('weekly')">Weekly Report</button>
-            <button onclick="generateReport('monthly')">Monthly Report</button>
-            <button onclick="generateReport('product')">Product Report</button>
-            <button onclick="generateReport('paymentMethod')">Payment Method Report</button>
-        </div>
-        <div>
-            <button onclick="exportToPDF()">Export to PDF</button>
-            <button onclick="exportToExcel()">Export to Excel</button>
-        </div>
-    </div>
-
     <script>
-        function openTab(tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            document.getElementById(tabName).style.display = "block";
+        function showReport(type) {
+            alert('Showing ' + type + ' report');
+            // Implement the report logic here
         }
-
-        function generateReport(reportType) {
-            // Logic to generate reports
-            console.log(reportType + ' report generated');
-        }
-
         function exportToPDF() {
-            // Logic to export to PDF
-            console.log('Exported to PDF');
+            alert('Exporting to PDF');
+            // Implement the PDF export logic here
         }
-
         function exportToExcel() {
-            // Logic to export to Excel
-            console.log('Exported to Excel');
+            alert('Exporting to Excel');
+            // Implement the Excel export logic here
         }
     </script>
 </body>
