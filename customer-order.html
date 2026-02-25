@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#c8410a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NURI SNACK">
+  <title>NURI SNACK — Pesan Sekarang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --spice:    #c8410a;
+      --spice-d:  #a33308;
+      --spice-l:  #f05a1e;
+      --cream:    #fef8f0;
+      --warm:     #fff4e6;
+      --gold:     #f0a500;
+      --gold-l:   #ffd166;
+      --ink:      #1a0a00;
+      --ink-m:    #5c3a1e;
+      --ink-l:    #9c7a5a;
+      --white:    #ffffff;
+      --card-shadow: 0 2px 16px rgba(200,65,10,0.10);
+      --radius:   16px;
+      --radius-sm: 10px;
+      --font-head: 'Playfair Display', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      font-family: var(--font-body);
+      background: var(--cream);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    /* ── SCREENS ── */
+    .screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      background: var(--cream);
+      overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .screen.active {
+      opacity: 1; pointer-events: all;
+    }
+
+    /* ── SPLASH ── */
+    #scrSplash {
+      background: var(--spice);
+      align-items: center; justify-content: center;
+      gap: 20px;
+    }
+    .splash-logo {
+      width: 96px; height: 96px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .splash-title {
+      font-family: var(--font-head);
+      font-size: 36px; font-weight: 900;
+      color: var(--white);
+      letter-spacing: 1px;
+    }
+    .splash-sub {
+      font-size: 14px; color: rgba(255,255,255,0.75);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .splash-loader {
+      width: 48px; height: 3px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 4px; overflow: hidden;
+      margin-top: 20px;
+    }
+    .splash-loader::after {
+      content: '';
+      display: block; height: 100%;
+      background: var(--white);
+      border-radius: 4px;
+      animation: loadbar 1.8s ease forwards;
+    }
+    @keyframes loadbar { from { width:0 } to { width:100% } }
+
+    /* ── FIREBASE SETUP ── */
+    #scrSetup {
+      background: var(--cream);
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .setup-header {
+      text-align: center; padding: 32px 0 24px;
+    }
+    .setup-header h1 {
+      font-family: var(--font-head);
+      font-size: 28px; color: var(--spice);
+    }
+    .setup-header p {
+      font-size: 14px; color: var(--ink-m); margin-top: 8px; line-height: 1.6;
+    }
+    .setup-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--card-shadow);
+    }
+    .setup-card h2 { font-size: 16px; margin-bottom: 16px; color: var(--ink); }
+    .form-field { margin-bottom: 14px; }
+    .form-field label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--ink-m); margin-bottom: 6px; letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .form-field input, .form-field textarea, .form-field select {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid #e8d5c4;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-family: var(--font-body);
+      background: var(--warm); color: var(--ink);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+      border-color: var(--spice);
+    }
+    .form-field textarea { resize: vertical; min-height: 80px; }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      width: 100%; padding: 15px;
+      background: var(--spice);
+      color: var(--white);
+      border: none; border-radius: var(--radius-sm);
+      font-size: 16px; font-weight: 700;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary:active { transform: scale(0.98); background: var(--spice-d); }
+    .btn-primary:disabled { background: #d4b8a8; cursor: not-allowed; }
+
+    .btn-outline {
+      padding: 10px 20px;
+      background: transparent;
+      color: var(--spice);
+      border: 2px solid var(--spice);
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-outline:active { background: var(--spice); color: var(--white); }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--white);
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 8px rgba(200,65,10,0.08);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+    .topbar-back {
+      width: 36px; height: 36px;
+      background: var(--warm);
+      border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px;
+      color: var(--spice); flex-shrink: 0;
+    }
+    .topbar-title {
+      font-family: var(--font-head);
+      font-size: 20px; font-weight: 700;
+      color: var(--ink); flex: 1;
+    }
+    .topbar-action {
+      background: none; border: none;
+      font-size: 22px; cursor: pointer;
+      position: relative;
+    }
+    .cart-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: var(--spice);
+      color: var(--white);
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── MENU SCREEN ── */
+    #scrMenu { background: var(--cream); }
+
+    .menu-hero {
+      background: linear-gradient(135deg, var(--spice), var(--spice-l));
+      padding: 20px 20px 28px;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    .menu-hero-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .store-name {
+      font-family: var(--font-head);
+      font-size: 22px; font-weight: 900;
+    }
+    .store-status {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .store-desc {
+      font-size: 13px; opacity: 0.85; line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .order-type-tabs {
+      display: flex; gap: 8px;
+    }
+    .order-type-tab {
+      flex: 1; padding: 8px 6px;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.75);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; text-align: center;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .order-type-tab.active {
+      background: var(--white);
+      color: var(--spice);
+      border-color: var(--white);
+    }
+    .order-type-tab .tab-icon { display: block; font-size: 18px; margin-bottom: 2px; }
+
+    .menu-categories {
+      padding: 16px 20px 8px;
+      display: flex; gap: 8px;
+      overflow-x: auto; flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .menu-categories::-webkit-scrollbar { display: none; }
+    .cat-btn {
+      padding: 7px 16px;
+      background: var(--white);
+      border: 1.5px solid #e8d5c4;
+      border-radius: 20px;
+      font-size: 13px; font-weight: 600;
+      color: var(--ink-m); cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .cat-btn.active {
+      background: var(--spice);
+      border-color: var(--spice);
+      color: var(--white);
+    }
+
+    .menu-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 8px 20px 100px;
+      scrollbar-width: none;
+    }
+    .menu-scroll::-webkit-scrollbar { display: none; }
+
+    .menu-section-title {
+      font-size: 12px; font-weight: 700;
+      color: var(--ink-l); letter-spacing: 1.5px;
+      text-transform: uppercase; margin: 16px 0 10px;
+    }
+
+    .product-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      display: flex; align-items: center;
+      padding: 14px;
+      box-shadow: var(--card-shadow);
+      gap: 12px;
+      transition: transform 0.15s;
+    }
+    .product-card:active { transform: scale(0.98); }
+    .product-emoji {
+      width: 56px; height: 56px;
+      background: var(--warm);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; flex-shrink: 0;
+    }
+    .product-info { flex: 1; min-width: 0; }
+    .product-name {
+      font-size: 15px; font-weight: 600; color: var(--ink);
+      margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .product-price {
+      font-size: 14px; font-weight: 700; color: var(--spice);
+    }
+    .product-unavail {
+      font-size: 11px; color: var(--ink-l); margin-top: 2px;
+    }
+    .product-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .qty-btn {
+      width: 30px; height: 30px;
+      background: var(--warm); border: 1.5px solid #e8d5c4;
+      border-radius: 50%; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-weight: 700; color: var(--spice);
+      transition: all 0.15s;
+      font-family: var(--font-body);
+      line-height: 1;
+    }
+    .qty-btn.add {
+      background: var(--spice); border-color: var(--spice); color: var(--white);
+    }
+    .qty-btn:active { transform: scale(0.9); }
+    .qty-value { font-size: 15px; font-weight: 700; min-width: 20px; text-align: center; }
+
+    /* Floating cart bar */
+    .cart-bar {
+      position: fixed; bottom: 20px; left: 20px; right: 20px;
+      background: var(--spice);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 8px 24px rgba(200,65,10,0.35);
+      cursor: pointer;
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+      transform: translateY(100px); opacity: 0;
+    }
+    .cart-bar.show { transform: translateY(0); opacity: 1; }
+    .cart-bar-count {
+      background: rgba(255,255,255,0.25);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: var(--white);
+    }
+    .cart-bar-text { flex: 1; color: var(--white); font-weight: 600; font-size: 14px; }
+    .cart-bar-total { color: var(--white); font-weight: 700; font-size: 16px; }
+
+    /* ── CART SCREEN ── */
+    #scrCart { background: var(--cream); }
+
+    .cart-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 16px 20px 100px;
+      scrollbar-width: none;
+    }
+    .cart-scroll::-webkit-scrollbar { display: none; }
+
+    .cart-item {
+      background: var(--white); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: var(--card-shadow);
+    }
+    .cart-item-emoji {
+      width: 44px; height: 44px;
+      background: var(--warm); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .cart-item-price { font-size: 13px; color: var(--spice); font-weight: 600; margin-top: 2px; }
+
+    .cart-summary {
+      background: var(--white); border-radius: var(--radius);
+      padding: 16px; box-shadow: var(--card-shadow);
+      margin-bottom: 16px;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between;
+      font-size: 14px; color: var(--ink-m);
+      padding: 6px 0;
+    }
+    .summary-row.total {
+      font-size: 17px; font-weight: 700; color: var(--ink);
+      border-top: 1.5px solid #f0e0d0;
+      margin-top: 8px; padding-top: 12px;
+    }
+    .summary-row.total span:last-child { color: var(--spice); }
+
+    .notes-box {
+      background: var(--white); border-radius: var(--radius);
+      padding: 16px; box-shadow: var(--card-shadow);
+      margin-bottom: 16px;
+    }
+    .notes-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--ink); }
+    .notes-box textarea {
+      width: 100%; padding: 10px;
+      border: 1.5px solid #e8d5c4;
+      border-radius: var(--radius-sm);
+      font-size: 13px; font-family: var(--font-body);
+      background: var(--warm); color: var(--ink);
+      outline: none; resize: none;
+    }
+
+    /* ── CHECKOUT SCREEN ── */
+    #scrCheckout { background: var(--cream); }
+    .checkout-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 16px 20px 100px;
+      scrollbar-width: none;
+    }
+    .checkout-scroll::-webkit-scrollbar { display: none; }
+
+    .section-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 16px; box-shadow: var(--card-shadow);
+      margin-bottom: 14px;
+    }
+    .section-card h3 {
+      font-size: 14px; font-weight: 700; color: var(--ink);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+    }
+
+    .option-group { display: flex; flex-direction: column; gap: 8px; }
+    .option-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; border-radius: var(--radius-sm);
+      border: 1.5px solid #e8d5c4;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .option-item.selected {
+      border-color: var(--spice);
+      background: rgba(200,65,10,0.05);
+    }
+    .option-radio {
+      width: 18px; height: 18px;
+      border-radius: 50%; border: 2px solid #d4b8a8;
+      flex-shrink: 0; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .option-item.selected .option-radio {
+      border-color: var(--spice); background: var(--spice);
+    }
+    .option-item.selected .option-radio::after {
+      content: ''; width: 6px; height: 6px;
+      background: var(--white); border-radius: 50%;
+    }
+    .option-label { flex: 1; }
+    .option-label-main { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .option-label-sub { font-size: 12px; color: var(--ink-l); margin-top: 1px; }
+    .option-icon { font-size: 22px; }
+
+    /* Payment highlight */
+    .payment-highlight {
+      background: var(--warm); border-radius: 10px;
+      padding: 12px; margin-top: 12px;
+      font-size: 13px; color: var(--ink-m); line-height: 1.6;
+      display: none;
+    }
+    .payment-highlight.show { display: block; }
+    .payment-highlight strong { color: var(--spice); }
+
+    /* Order summary mini */
+    .mini-items { font-size: 13px; color: var(--ink-m); margin-bottom: 8px; }
+    .mini-item { display: flex; justify-content: space-between; padding: 3px 0; }
+
+    /* ── ORDER STATUS SCREEN ── */
+    #scrStatus { background: var(--cream); }
+    .status-scroll {
+      flex: 1; overflow-y: auto; padding: 20px;
+      scrollbar-width: none;
+    }
+    .status-scroll::-webkit-scrollbar { display: none; }
+
+    .status-hero {
+      text-align: center; padding: 24px 0;
+    }
+    .status-icon {
+      font-size: 64px; margin-bottom: 12px;
+      animation: bounce 2s ease infinite;
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .status-order-num {
+      font-size: 13px; color: var(--ink-l); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .status-order-code {
+      font-family: var(--font-head);
+      font-size: 32px; font-weight: 900; color: var(--spice);
+      margin-bottom: 8px;
+    }
+    .status-msg {
+      font-size: 15px; font-weight: 600; color: var(--ink);
+    }
+    .status-sub {
+      font-size: 13px; color: var(--ink-l); margin-top: 4px; line-height: 1.5;
+    }
+
+    /* Progress steps */
+    .status-steps {
+      background: var(--white); border-radius: var(--radius);
+      padding: 16px; box-shadow: var(--card-shadow);
+      margin: 20px 0;
+    }
+    .step-row {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 0; position: relative;
+    }
+    .step-row:not(:last-child)::after {
+      content: '';
+      position: absolute; left: 18px; top: 40px; bottom: 0; width: 2px;
+      background: #f0e0d0;
+    }
+    .step-row.done::after { background: var(--spice); }
+    .step-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #f0e0d0; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; position: relative; z-index: 1;
+      transition: all 0.3s;
+    }
+    .step-row.done .step-dot { background: var(--spice); }
+    .step-row.current .step-dot {
+      background: var(--spice);
+      box-shadow: 0 0 0 6px rgba(200,65,10,0.15);
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 6px rgba(200,65,10,0.15); }
+      50% { box-shadow: 0 0 0 12px rgba(200,65,10,0.05); }
+    }
+    .step-content { flex: 1; padding-top: 6px; }
+    .step-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .step-time { font-size: 12px; color: var(--ink-l); margin-top: 2px; }
+    .step-row:not(.done):not(.current) .step-title { color: var(--ink-l); }
+
+    /* Order detail card */
+    .order-detail-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 16px; box-shadow: var(--card-shadow);
+      margin-bottom: 14px;
+    }
+    .order-detail-card h3 {
+      font-size: 14px; font-weight: 700; color: var(--ink);
+      margin-bottom: 12px;
+    }
+    .detail-row {
+      display: flex; justify-content: space-between;
+      font-size: 13px; padding: 4px 0;
+    }
+    .detail-row span:first-child { color: var(--ink-l); }
+    .detail-row span:last-child { font-weight: 500; color: var(--ink); }
+
+    /* ── EMPTY STATES ── */
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+    }
+    .empty-state .es-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; color: var(--ink-l); line-height: 1.6; }
+
+    /* ── BOTTOM SAFE AREA ── */
+    .bottom-action {
+      padding: 16px 20px;
+      background: var(--white);
+      box-shadow: 0 -4px 16px rgba(200,65,10,0.08);
+      flex-shrink: 0;
+    }
+
+    /* ── TAG / CHIP ── */
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .chip-green { background: #d1fae5; color: #065f46; }
+    .chip-amber { background: #fef3c7; color: #92400e; }
+    .chip-blue  { background: #dbeafe; color: #1e40af; }
+    .chip-red   { background: #fee2e2; color: #991b1b; }
+
+    /* ── LOADING / TOAST ── */
+    #globalLoader {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(26,10,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    #globalLoader.show { opacity: 1; pointer-events: all; }
+    .loader-box {
+      background: var(--white); border-radius: var(--radius);
+      padding: 24px 32px; text-align: center;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+    }
+    .loader-spin {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid #f0e0d0;
+      border-top-color: var(--spice);
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-box p { font-size: 14px; color: var(--ink-m); }
+
+    #toastEl {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+      z-index: 1000; background: var(--ink);
+      color: var(--white); padding: 12px 20px; border-radius: 24px;
+      font-size: 14px; font-weight: 500; white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #toastEl.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── MISC ── */
+    .divider {
+      height: 1px; background: #f0e0d0; margin: 12px 0;
+    }
+    .badge-type {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--warm); border: 1px solid #e8d5c4;
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 12px; font-weight: 600; color: var(--ink-m);
+    }
+
+    /* Table number input */
+    .table-input {
+      display: none; margin-top: 10px;
+    }
+    .table-input.show { display: block; }
+    .table-input input {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid #e8d5c4; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 600; font-family: var(--font-body);
+      background: var(--warm); color: var(--ink); text-align: center;
+      outline: none;
+    }
+    .table-input input:focus { border-color: var(--spice); }
+
+    /* Delivery address */
+    .delivery-addr { display: none; margin-top: 10px; }
+    .delivery-addr.show { display: block; }
+    .delivery-addr input {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid #e8d5c4; border-radius: var(--radius-sm);
+      font-size: 14px; font-family: var(--font-body);
+      background: var(--warm); color: var(--ink);
+      outline: none; margin-bottom: 6px;
+    }
+    .delivery-addr input:focus { border-color: var(--spice); }
+  </style>
+</head>
+<body>
+
+<!-- ── GLOBAL LOADER ── -->
+<div id="globalLoader">
+  <div class="loader-box">
+    <div class="loader-spin"></div>
+    <p id="loaderMsg">Memproses...</p>
+  </div>
+</div>
+<div id="toastEl"></div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1: SPLASH
+══════════════════════════════════════════ -->
+<div class="screen active" id="scrSplash">
+  <div class="splash-logo">🍢</div>
+  <div class="splash-title">NURI SNACK</div>
+  <div class="splash-sub">Pesan Sekarang, Nikmati Sekarang</div>
+  <div class="splash-loader"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2: FIREBASE SETUP
+══════════════════════════════════════════ -->
+<div class="screen" id="scrSetup">
+  <div class="setup-header">
+    <div style="font-size:48px;margin-bottom:12px">🔧</div>
+    <h1>Konfigurasi Toko</h1>
+    <p>Masukkan konfigurasi Firebase yang sama<br>dengan aplikasi kasir NURI SNACK.</p>
+  </div>
+  <div class="setup-card">
+    <h2>Firebase Project Config</h2>
+    <div class="form-field">
+      <label>API Key</label>
+      <input type="text" id="fbApiKey" placeholder="AIzaSy...">
+    </div>
+    <div class="form-field">
+      <label>Auth Domain</label>
+      <input type="text" id="fbAuthDomain" placeholder="project.firebaseapp.com">
+    </div>
+    <div class="form-field">
+      <label>Project ID</label>
+      <input type="text" id="fbProjectId" placeholder="project-id">
+    </div>
+    <div class="form-field">
+      <label>App ID</label>
+      <input type="text" id="fbAppId" placeholder="1:123:web:abc">
+    </div>
+    <div style="margin-top:6px">
+      <button class="btn-primary" onclick="saveFirebaseConfig()">Simpan & Mulai</button>
+    </div>
+  </div>
+  <p style="text-align:center;font-size:12px;color:var(--ink-l);margin:16px 20px">
+    Konfigurasi disimpan di perangkat ini saja dan tidak dibagikan ke siapapun.
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3: MENU
+══════════════════════════════════════════ -->
+<div class="screen" id="scrMenu">
+  <!-- Hero header -->
+  <div class="menu-hero">
+    <div class="menu-hero-top">
+      <div>
+        <div class="store-name">🍢 NURI SNACK</div>
+        <div style="font-size:13px;opacity:0.8;margin-top:2px">Pilih jenis pesanan:</div>
+      </div>
+      <div class="store-status">🟢 Buka</div>
+    </div>
+    <div class="order-type-tabs">
+      <div class="order-type-tab active" data-type="dinein" onclick="selectOrderType('dinein',this)">
+        <span class="tab-icon">🪑</span>Makan di Sini
+      </div>
+      <div class="order-type-tab" data-type="pickup" onclick="selectOrderType('pickup',this)">
+        <span class="tab-icon">🛍️</span>Ambil Sendiri
+      </div>
+      <div class="order-type-tab" data-type="delivery" onclick="selectOrderType('delivery',this)">
+        <span class="tab-icon">🛵</span>Diantar
+      </div>
+    </div>
+  </div>
+
+  <!-- Category tabs -->
+  <div class="menu-categories" id="catTabs">
+    <div class="cat-btn active" onclick="filterCategory('semua',this)">🍽️ Semua</div>
+  </div>
+
+  <!-- Product list -->
+  <div class="menu-scroll" id="productList">
+    <div class="empty-state">
+      <div class="es-icon">⏳</div>
+      <h3>Memuat Menu...</h3>
+      <p>Sedang mengambil menu terbaru</p>
+    </div>
+  </div>
+
+  <!-- Floating cart button -->
+  <div class="cart-bar" id="cartBar" onclick="goToCart()">
+    <div class="cart-bar-count" id="cartBarCount">0</div>
+    <div class="cart-bar-text">Lihat Keranjang</div>
+    <div class="cart-bar-total" id="cartBarTotal">Rp 0</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 4: CART
+══════════════════════════════════════════ -->
+<div class="screen" id="scrCart">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goTo('scrMenu')">←</button>
+    <div class="topbar-title">Keranjang</div>
+    <div id="cartTypeBadge" class="badge-type">🪑 Makan di Sini</div>
+  </div>
+
+  <div class="cart-scroll" id="cartList">
+    <div class="empty-state">
+      <div class="es-icon">🛒</div>
+      <h3>Keranjang Kosong</h3>
+      <p>Tambah produk dari menu dulu ya!</p>
+    </div>
+  </div>
+
+  <div class="bottom-action">
+    <button class="btn-primary" id="checkoutBtn" onclick="goToCheckout()">
+      Lanjut ke Pembayaran →
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 5: CHECKOUT
+══════════════════════════════════════════ -->
+<div class="screen" id="scrCheckout">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goTo('scrCart')">←</button>
+    <div class="topbar-title">Checkout</div>
+  </div>
+
+  <div class="checkout-scroll">
+
+    <!-- Data diri -->
+    <div class="section-card">
+      <h3>👤 Data Pemesan</h3>
+      <div class="form-field" style="margin-bottom:12px">
+        <label>Nama</label>
+        <input type="text" id="custName" placeholder="Nama kamu..." autocomplete="name">
+      </div>
+      <div class="form-field" style="margin-bottom:0">
+        <label>No. WhatsApp</label>
+        <input type="tel" id="custPhone" placeholder="08xxx" autocomplete="tel">
+      </div>
+    </div>
+
+    <!-- Tipe pesanan -->
+    <div class="section-card">
+      <h3 id="orderTypeLabel">🪑 Makan di Sini</h3>
+      <!-- Dine-in: nomor meja -->
+      <div class="table-input" id="tableInput">
+        <label style="font-size:12px;color:var(--ink-l);display:block;margin-bottom:6px">Nomor Meja</label>
+        <input type="number" id="tableNumber" placeholder="Misal: 3" min="1">
+      </div>
+      <!-- Delivery: alamat -->
+      <div class="delivery-addr" id="deliveryAddr">
+        <input type="text" id="addrStreet" placeholder="Nama jalan / Gang...">
+        <input type="text" id="addrDetail" placeholder="Detail (RT/RW, Kelurahan, dsb)">
+      </div>
+      <p id="pickupNote" style="font-size:13px;color:var(--ink-l);line-height:1.6;display:none">
+        Pesanan akan disiapkan dan bisa diambil di kasir.
+      </p>
+    </div>
+
+    <!-- Metode pembayaran -->
+    <div class="section-card">
+      <h3>💳 Metode Pembayaran</h3>
+      <div class="option-group">
+        <div class="option-item selected" id="payOpt-transfer" onclick="selectPayment('transfer')">
+          <div class="option-icon">🏦</div>
+          <div class="option-label">
+            <div class="option-label-main">Transfer Bank / QRIS</div>
+            <div class="option-label-sub">Bayar sebelum pesanan diproses</div>
+          </div>
+          <div class="option-radio" id="payRadio-transfer"></div>
+        </div>
+        <div class="option-item" id="payOpt-cod" onclick="selectPayment('cod')">
+          <div class="option-icon">💵</div>
+          <div class="option-label">
+            <div class="option-label-main">Bayar di Tempat (COD)</div>
+            <div class="option-label-sub">Bayar saat ambil / terima pesanan</div>
+          </div>
+          <div class="option-radio" id="payRadio-cod"></div>
+        </div>
+      </div>
+      <!-- Transfer info -->
+      <div class="payment-highlight show" id="transferInfo">
+        Setelah memesan, kami akan kirimkan info pembayaran via WhatsApp ke nomor kamu.
+        Pesanan diproses setelah pembayaran dikonfirmasi.
+      </div>
+    </div>
+
+    <!-- Ringkasan pesanan -->
+    <div class="section-card">
+      <h3>📋 Ringkasan Pesanan</h3>
+      <div id="checkoutItemList" class="mini-items"></div>
+      <div class="divider"></div>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="coSubtotal">Rp 0</span>
+      </div>
+      <div class="summary-row" id="coDeliveryRow" style="display:none">
+        <span>Ongkir</span>
+        <span id="coDelivery">Rp 5.000</span>
+      </div>
+      <div class="summary-row total">
+        <span>Total</span>
+        <span id="coTotal">Rp 0</span>
+      </div>
+    </div>
+
+    <!-- Catatan -->
+    <div class="section-card" style="margin-bottom:0">
+      <h3>📝 Catatan (Opsional)</h3>
+      <textarea id="orderNotes" placeholder="Misal: tanpa pedas, alergi kacang..." rows="3"
+        style="width:100%;padding:10px;border:1.5px solid #e8d5c4;border-radius:10px;font-size:14px;font-family:var(--font-body);background:var(--warm);outline:none;resize:none"></textarea>
+    </div>
+
+  </div>
+
+  <div class="bottom-action">
+    <button class="btn-primary" onclick="submitOrder()">Pesan Sekarang 🚀</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 6: ORDER STATUS
+══════════════════════════════════════════ -->
+<div class="screen" id="scrStatus">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goTo('scrMenu')">←</button>
+    <div class="topbar-title">Status Pesanan</div>
+    <button class="topbar-action" onclick="shareOrder()" title="Bagikan">🔗</button>
+  </div>
+
+  <div class="status-scroll">
+    <!-- Hero -->
+    <div class="status-hero">
+      <div class="status-icon" id="statusIcon">⏳</div>
+      <div class="status-order-num">Nomor Pesanan</div>
+      <div class="status-order-code" id="statusOrderNum">#NS0001</div>
+      <div class="status-msg" id="statusMsg">Pesanan Diterima</div>
+      <div class="status-sub" id="statusSub">Tunggu konfirmasi dari kami ya!</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="status-steps">
+      <div class="step-row" id="step-pending">
+        <div class="step-dot">📥</div>
+        <div class="step-content">
+          <div class="step-title">Pesanan Masuk</div>
+          <div class="step-time" id="stepTime-pending">—</div>
+        </div>
+      </div>
+      <div class="step-row" id="step-confirmed">
+        <div class="step-dot">✅</div>
+        <div class="step-content">
+          <div class="step-title">Dikonfirmasi Kasir</div>
+          <div class="step-time" id="stepTime-confirmed">Menunggu...</div>
+        </div>
+      </div>
+      <div class="step-row" id="step-preparing">
+        <div class="step-dot">👨‍🍳</div>
+        <div class="step-content">
+          <div class="step-title">Sedang Dimasak</div>
+          <div class="step-time" id="stepTime-preparing">Menunggu...</div>
+        </div>
+      </div>
+      <div class="step-row" id="step-ready">
+        <div class="step-dot">🔔</div>
+        <div class="step-content">
+          <div class="step-title" id="stepTitle-ready">Siap Diambil</div>
+          <div class="step-time" id="stepTime-ready">Menunggu...</div>
+        </div>
+      </div>
+      <div class="step-row" id="step-completed">
+        <div class="step-dot">🎉</div>
+        <div class="step-content">
+          <div class="step-title">Selesai</div>
+          <div class="step-time" id="stepTime-completed">Menunggu...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order details -->
+    <div class="order-detail-card">
+      <h3>📋 Detail Pesanan</h3>
+      <div id="statusItemList"></div>
+      <div class="divider"></div>
+      <div class="detail-row">
+        <span>Tipe</span><span id="sdType">—</span>
+      </div>
+      <div class="detail-row">
+        <span>Pembayaran</span><span id="sdPayment">—</span>
+      </div>
+      <div class="detail-row" id="sdAddrRow" style="display:none">
+        <span>Alamat</span><span id="sdAddr">—</span>
+      </div>
+      <div class="detail-row" id="sdTableRow" style="display:none">
+        <span>Meja</span><span id="sdTable">—</span>
+      </div>
+      <div class="detail-row">
+        <span>Total</span><span id="sdTotal" style="color:var(--spice);font-weight:700">—</span>
+      </div>
+    </div>
+
+    <!-- New order button -->
+    <button class="btn-outline" style="width:100%;margin-bottom:30px" onclick="newOrder()">
+      + Pesan Lagi
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════ -->
+<script type="module">
+// ── Firebase imports ──
+import { initializeApp, getApps }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getFirestore, collection, addDoc, doc, onSnapshot,
+  getDocs, query, where, orderBy, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── State ──
+let db = null;
+let products = [];
+let cart = {};           // { productId: qty }
+let currentOrderType = 'dinein';
+let currentPayment = 'transfer';
+let currentOrderId = null;
+let statusUnsub = null;
+let orderTimestamps = {};  // { step: time }
+const DELIVERY_FEE = 5000;
+const FB_CONFIG_KEY = 'nuri_cust_fb_config';
+
+// ── Helpers ──
+const $ = id => document.getElementById(id);
+const fmt = n => 'Rp ' + (n || 0).toLocaleString('id-ID');
+const fmtTime = ts => {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+};
+
+function showLoader(msg='Memproses...') {
+  $('loaderMsg').textContent = msg;
+  $('globalLoader').classList.add('show');
+}
+function hideLoader() { $('globalLoader').classList.remove('show'); }
+
+let toastTimer;
+function toast(msg, dur=3000) {
+  const el = $('toastEl');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(screenId).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── PWA manifest (inline) ──
+(function() {
+  const manifest = {
+    name: 'NURI SNACK Order',
+    short_name: 'NURI SNACK',
+    start_url: window.location.href,
+    display: 'standalone',
+    background_color: '#c8410a',
+    theme_color: '#c8410a',
+    icons: [{
+      src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23c8410a"/><text y=".9em" font-size="80" x="10">🍢</text></svg>',
+      sizes: '192x192', type: 'image/svg+xml'
+    }]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest'; link.href = url;
+  document.head.appendChild(link);
+})();
+
+// ── INIT ──
+window.addEventListener('load', async () => {
+  // Check URL for order tracking
+  const params = new URLSearchParams(window.location.search);
+  const trackId = params.get('track');
+
+  // Splash delay
+  await new Promise(r => setTimeout(r, 1800));
+
+  const savedConfig = localStorage.getItem(FB_CONFIG_KEY);
+  if (!savedConfig) {
+    goTo('scrSetup');
+    return;
+  }
+
+  try {
+    const cfg = JSON.parse(savedConfig);
+    await initFirebase(cfg);
+    if (trackId) {
+      await openTrackOrder(trackId);
+    } else {
+      await loadMenu();
+      goTo('scrMenu');
+    }
+  } catch(e) {
+    console.error(e);
+    goTo('scrSetup');
+  }
+});
+
+// ── Firebase setup ──
+window.saveFirebaseConfig = async function() {
+  const cfg = {
+    apiKey:     $('fbApiKey').value.trim(),
+    authDomain: $('fbAuthDomain').value.trim(),
+    projectId:  $('fbProjectId').value.trim(),
+    appId:      $('fbAppId').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.projectId) {
+    toast('⚠️ API Key dan Project ID wajib diisi!'); return;
+  }
+  showLoader('Menghubungkan...');
+  try {
+    await initFirebase(cfg);
+    localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cfg));
+    await loadMenu();
+    hideLoader();
+    goTo('scrMenu');
+  } catch(e) {
+    hideLoader();
+    toast('❌ Gagal terhubung: ' + e.message);
+  }
+};
+
+async function initFirebase(cfg) {
+  const apps = getApps();
+  const app = apps.length ? apps[0] : initializeApp(cfg);
+  db = getFirestore(app);
+}
+
+// ── Load menu from Firebase ──
+async function loadMenu() {
+  showLoader('Memuat menu...');
+  try {
+    const snap = await getDocs(collection(db, 'products'));
+    products = [];
+    snap.forEach(d => {
+      const p = { id: d.id, ...d.data() };
+      if (p.name && p.price) products.push(p);
+    });
+
+    // Also try 'barang' collection (same as kasir)
+    if (products.length === 0) {
+      const snap2 = await getDocs(collection(db, 'barang'));
+      snap2.forEach(d => {
+        const p = { id: d.id, ...d.data() };
+        if (p.name && p.price) products.push(p);
+      });
+    }
+
+    renderCategories();
+    renderProducts();
+    hideLoader();
+  } catch(e) {
+    hideLoader();
+    toast('⚠️ Gagal memuat menu');
+    console.error(e);
+  }
+}
+
+// ── Render categories ──
+function renderCategories() {
+  const cats = ['semua', ...new Set(products.map(p => p.category || 'Lainnya').filter(Boolean))];
+  const el = $('catTabs');
+  el.innerHTML = cats.map((c,i) =>
+    `<div class="cat-btn ${i===0?'active':''}" onclick="filterCategory('${c}',this)">
+      ${i===0?'🍽️':getCatIcon(c)} ${c==='semua'?'Semua':c}
+    </div>`
+  ).join('');
+}
+
+function getCatIcon(cat) {
+  const m = {
+    'minuman':'🥤','makanan':'🍜','snack':'🍢','gorengan':'🧆',
+    'dessert':'🍰','kue':'🎂','paket':'📦'
+  };
+  const k = Object.keys(m).find(k => cat.toLowerCase().includes(k));
+  return m[k] || '🍽️';
+}
+
+let currentCat = 'semua';
+window.filterCategory = function(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderProducts();
+};
+
+// ── Render products ──
+window.renderProducts = function() {
+  const list = $('productList');
+  const filtered = currentCat === 'semua'
+    ? products
+    : products.filter(p => (p.category || 'Lainnya') === currentCat);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="es-icon">🍽️</div>
+      <h3>Menu Kosong</h3>
+      <p>Belum ada produk di kategori ini.</p>
+    </div>`;
+    return;
+  }
+
+  // Group by category if showing all
+  if (currentCat === 'semua') {
+    const groups = {};
+    filtered.forEach(p => {
+      const cat = p.category || 'Lainnya';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(p);
+    });
+    list.innerHTML = Object.entries(groups).map(([cat, items]) =>
+      `<div class="menu-section-title">${getCatIcon(cat)} ${cat}</div>` +
+      items.map(p => productCard(p)).join('')
+    ).join('');
+  } else {
+    list.innerHTML = filtered.map(p => productCard(p)).join('');
+  }
+};
+
+function productCard(p) {
+  const qty = cart[p.id] || 0;
+  const avail = p.available !== false;
+  return `<div class="product-card" ${!avail ? 'style="opacity:0.5"' : ''}>
+    <div class="product-emoji">${p.emoji || getProductEmoji(p.name, p.category)}</div>
+    <div class="product-info">
+      <div class="product-name">${p.name}</div>
+      <div class="product-price">${fmt(p.price)}</div>
+      ${!avail ? '<div class="product-unavail">Habis</div>' : ''}
+    </div>
+    <div class="product-actions">
+      ${qty > 0
+        ? `<button class="qty-btn" onclick="updateCart('${p.id}',-1)">−</button>
+           <span class="qty-value">${qty}</span>`
+        : ''}
+      <button class="qty-btn add" onclick="updateCart('${p.id}',1)"
+        ${!avail?'disabled':''}>+</button>
+    </div>
+  </div>`;
+}
+
+function getProductEmoji(name, cat) {
+  const n = (name||'').toLowerCase();
+  const c = (cat||'').toLowerCase();
+  if (c.includes('minuman')||n.includes('es')||n.includes('jus')||n.includes('teh')) return '🥤';
+  if (n.includes('mie')||n.includes('mi')) return '🍜';
+  if (n.includes('nasi')) return '🍚';
+  if (n.includes('goreng')||n.includes('tempe')||n.includes('tahu')) return '🧆';
+  if (n.includes('bakso')||n.includes('baso')) return '🍢';
+  if (n.includes('sate')) return '🍡';
+  if (n.includes('kue')||n.includes('cake')) return '🎂';
+  if (c.includes('snack')) return '🍢';
+  return '🍽️';
+}
+
+// ── Cart ──
+window.updateCart = function(pid, delta) {
+  const p = products.find(x => x.id === pid);
+  if (!p) return;
+  cart[pid] = Math.max(0, (cart[pid]||0) + delta);
+  if (cart[pid] === 0) delete cart[pid];
+  renderProducts();
+  updateCartBar();
+};
+
+function getCartItems() {
+  return Object.entries(cart).map(([id, qty]) => {
+    const p = products.find(x => x.id === id);
+    return p ? { ...p, qty, subtotal: p.price * qty } : null;
+  }).filter(Boolean);
+}
+
+function getCartTotals() {
+  const items = getCartItems();
+  const subtotal = items.reduce((s,i) => s + i.subtotal, 0);
+  const delivery = currentOrderType === 'delivery' ? DELIVERY_FEE : 0;
+  return { subtotal, delivery, total: subtotal + delivery, items };
+}
+
+function updateCartBar() {
+  const items = getCartItems();
+  const totalQty = items.reduce((s,i) => s + i.qty, 0);
+  const { total } = getCartTotals();
+  const bar = $('cartBar');
+  $('cartBarCount').textContent = totalQty;
+  $('cartBarTotal').textContent = fmt(total);
+  if (totalQty > 0) bar.classList.add('show');
+  else bar.classList.remove('show');
+}
+
+window.goToCart = function() {
+  renderCart();
+  goTo('scrCart');
+};
+
+function renderCart() {
+  const { items, subtotal, delivery, total } = getCartTotals();
+  const typeLabels = { dinein:'🪑 Makan di Sini', pickup:'🛍️ Ambil Sendiri', delivery:'🛵 Diantar' };
+  $('cartTypeBadge').textContent = typeLabels[currentOrderType];
+
+  if (items.length === 0) {
+    $('cartList').innerHTML = `<div class="empty-state">
+      <div class="es-icon">🛒</div>
+      <h3>Keranjang Kosong</h3>
+      <p>Tambah produk dari menu dulu ya!</p>
+    </div>`;
+    return;
+  }
+
+  let html = items.map(i => `
+    <div class="cart-item">
+      <div class="cart-item-emoji">${i.emoji || getProductEmoji(i.name, i.category)}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${i.name}</div>
+        <div class="cart-item-price">${fmt(i.price)} × ${i.qty} = ${fmt(i.subtotal)}</div>
+      </div>
+      <div class="product-actions">
+        <button class="qty-btn" onclick="cartUpdateRedraw('${i.id}',-1)">−</button>
+        <span class="qty-value">${i.qty}</span>
+        <button class="qty-btn add" onclick="cartUpdateRedraw('${i.id}',1)">+</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Summary
+  html += `<div class="cart-summary">
+    <div class="summary-row"><span>Subtotal (${items.reduce((s,i)=>s+i.qty,0)} item)</span><span>${fmt(subtotal)}</span></div>
+    ${delivery ? `<div class="summary-row"><span>Ongkir</span><span>${fmt(delivery)}</span></div>` : ''}
+    <div class="summary-row total"><span>Total</span><span>${fmt(total)}</span></div>
+  </div>`;
+
+  // Notes
+  html += `<div class="notes-box">
+    <h3>📝 Catatan Pesanan</h3>
+    <textarea id="cartNotes" placeholder="Misal: tanpa pedas, alergi kacang..." rows="3">${$('orderNotes')?.value||''}</textarea>
+  </div>`;
+
+  $('cartList').innerHTML = html;
+}
+
+window.cartUpdateRedraw = function(pid, delta) {
+  updateCart(pid, delta);
+  renderCart();
+};
+
+window.goToCheckout = function() {
+  const { items } = getCartTotals();
+  if (items.length === 0) { toast('Keranjang masih kosong!'); return; }
+
+  // Sync notes
+  const notesEl = $('cartNotes');
+  if (notesEl) $('orderNotes').value = notesEl.value;
+
+  renderCheckout();
+  goTo('scrCheckout');
+};
+
+function renderCheckout() {
+  const { items, subtotal, delivery, total } = getCartTotals();
+  const typeLabels = {
+    dinein: '🪑 Makan di Sini',
+    pickup: '🛍️ Ambil Sendiri di Kasir',
+    delivery: '🛵 Diantar ke Alamat'
+  };
+  $('orderTypeLabel').textContent = typeLabels[currentOrderType];
+
+  // Show/hide fields
+  $('tableInput').classList.toggle('show', currentOrderType === 'dinein');
+  $('deliveryAddr').classList.toggle('show', currentOrderType === 'delivery');
+  $('pickupNote').style.display = currentOrderType === 'pickup' ? 'block' : 'none';
+  $('coDeliveryRow').style.display = delivery ? 'flex' : 'none';
+
+  // Item list
+  $('checkoutItemList').innerHTML = items.map(i =>
+    `<div class="mini-item"><span>${i.qty}× ${i.name}</span><span>${fmt(i.subtotal)}</span></div>`
+  ).join('');
+
+  $('coSubtotal').textContent = fmt(subtotal);
+  $('coDelivery').textContent = fmt(delivery);
+  $('coTotal').textContent = fmt(total);
+}
+
+// ── Order type selection ──
+window.selectOrderType = function(type, el) {
+  currentOrderType = type;
+  document.querySelectorAll('.order-type-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  updateCartBar();
+};
+
+// ── Payment selection ──
+window.selectPayment = function(method) {
+  currentPayment = method;
+  ['transfer','cod'].forEach(m => {
+    $(`payOpt-${m}`).classList.toggle('selected', m === method);
+  });
+  $('transferInfo').classList.toggle('show', method === 'transfer');
+};
+
+// ── Submit order ──
+window.submitOrder = async function() {
+  const name  = $('custName').value.trim();
+  const phone = $('custPhone').value.trim();
+  if (!name)  { toast('⚠️ Nama tidak boleh kosong!'); $('custName').focus(); return; }
+  if (!phone) { toast('⚠️ Nomor WA tidak boleh kosong!'); $('custPhone').focus(); return; }
+  if (currentOrderType === 'dinein' && !$('tableNumber').value) {
+    toast('⚠️ Nomor meja harus diisi!'); $('tableNumber').focus(); return;
+  }
+  if (currentOrderType === 'delivery' && !$('addrStreet').value.trim()) {
+    toast('⚠️ Alamat pengiriman harus diisi!'); $('addrStreet').focus(); return;
+  }
+
+  const { items, subtotal, delivery, total } = getCartTotals();
+  if (items.length === 0) { toast('Keranjang kosong!'); return; }
+
+  showLoader('Mengirim pesanan...');
+
+  const typeLabels = { dinein:'Makan di Sini', pickup:'Ambil Sendiri', delivery:'Diantar' };
+  const payLabels  = { transfer:'Transfer/QRIS', cod:'Bayar di Tempat' };
+
+  const orderData = {
+    customerName:  name,
+    customerPhone: phone,
+    orderType:     currentOrderType,
+    orderTypeLabel: typeLabels[currentOrderType],
+    paymentMethod: currentPayment,
+    paymentLabel:  payLabels[currentPayment],
+    items: items.map(i => ({ id:i.id, name:i.name, price:i.price, qty:i.qty, subtotal:i.subtotal })),
+    subtotal, deliveryFee: delivery, total,
+    tableNumber: currentOrderType === 'dinein' ? ($('tableNumber').value||'') : '',
+    address:     currentOrderType === 'delivery'
+      ? (($('addrStreet').value||'') + ' ' + ($('addrDetail').value||'')).trim()
+      : '',
+    notes:   $('orderNotes').value.trim(),
+    status:  'pending',
+    source:  'customer_app',
+    createdAt: serverTimestamp(),
+    // Timestamps for each step
+    timestamps: { pending: new Date().toISOString() }
+  };
+
+  try {
+    const ref = await addDoc(collection(db, 'orders'), orderData);
+    currentOrderId = ref.id;
+    hideLoader();
+    cart = {};
+    updateCartBar();
+    openStatusScreen(ref.id);
+    toast('✅ Pesanan berhasil dikirim!');
+  } catch(e) {
+    hideLoader();
+    toast('❌ Gagal mengirim: ' + e.message);
+    console.error(e);
+  }
+};
+
+// ── Status screen ──
+function openStatusScreen(orderId) {
+  if (statusUnsub) { statusUnsub(); statusUnsub = null; }
+  currentOrderId = orderId;
+  goTo('scrStatus');
+
+  statusUnsub = onSnapshot(doc(db, 'orders', orderId), snap => {
+    if (!snap.exists()) return;
+    renderStatusScreen(snap.data(), orderId);
+  });
+}
+
+async function openTrackOrder(orderId) {
+  showLoader('Mencari pesanan...');
+  try {
+    await initFirebase(JSON.parse(localStorage.getItem(FB_CONFIG_KEY)));
+    hideLoader();
+    openStatusScreen(orderId);
+    goTo('scrStatus');
+  } catch(e) {
+    hideLoader();
+    toast('Pesanan tidak ditemukan');
+    goTo('scrMenu');
+  }
+}
+
+const STATUS_CONFIG = {
+  pending:    { icon:'⏳', msg:'Pesanan Diterima',     sub:'Menunggu konfirmasi dari kasir...' },
+  confirmed:  { icon:'✅', msg:'Pesanan Dikonfirmasi', sub:'Pesanan kamu sedang disiapkan!' },
+  preparing:  { icon:'👨‍🍳', msg:'Sedang Dimasak',      sub:'Dapur sedang memproses pesanan kamu 🔥' },
+  ready:      { icon:'🔔', msg:'Siap!',               sub:'Pesanan sudah siap, segera diambil/diantar!' },
+  completed:  { icon:'🎉', msg:'Selesai!',             sub:'Terima kasih sudah memesan di NURI SNACK! 😊' },
+  cancelled:  { icon:'❌', msg:'Dibatalkan',           sub:'Pesanan dibatalkan. Hubungi kami jika ada pertanyaan.' },
+};
+
+const STATUS_ORDER = ['pending','confirmed','preparing','ready','completed'];
+
+function renderStatusScreen(order, orderId) {
+  const status = order.status || 'pending';
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+
+  $('statusIcon').textContent = cfg.icon;
+  $('statusOrderNum').textContent = '#' + orderId.slice(-6).toUpperCase();
+  $('statusMsg').textContent = cfg.msg;
+  $('statusSub').textContent = cfg.sub;
+
+  // Ready label based on type
+  $('stepTitle-ready').textContent =
+    order.orderType === 'delivery' ? 'Dikirim' :
+    order.orderType === 'pickup'   ? 'Siap Diambil' : 'Siap Disajikan';
+
+  // Step states
+  const currentIdx = STATUS_ORDER.indexOf(status);
+  STATUS_ORDER.forEach((s, i) => {
+    const row = $(`step-${s}`);
+    if (!row) return;
+    row.classList.remove('done','current');
+    if (i < currentIdx) row.classList.add('done');
+    else if (i === currentIdx) row.classList.add('current');
+
+    const ts = order.timestamps?.[s];
+    $(`stepTime-${s}`).textContent = ts
+      ? new Date(ts).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'})
+      : (i > currentIdx ? 'Menunggu...' : '');
+  });
+
+  // Items
+  $('statusItemList').innerHTML = (order.items||[]).map(i =>
+    `<div class="mini-item"><span>${i.qty}× ${i.name}</span><span>${fmt(i.subtotal)}</span></div>`
+  ).join('');
+
+  // Details
+  $('sdType').textContent = order.orderTypeLabel || '—';
+  $('sdPayment').textContent = order.paymentLabel || '—';
+  $('sdTotal').textContent = fmt(order.total);
+  if (order.address) {
+    $('sdAddrRow').style.display = 'flex';
+    $('sdAddr').textContent = order.address;
+  }
+  if (order.tableNumber) {
+    $('sdTableRow').style.display = 'flex';
+    $('sdTable').textContent = 'Meja ' + order.tableNumber;
+  }
+}
+
+window.shareOrder = function() {
+  if (!currentOrderId) return;
+  const url = window.location.origin + window.location.pathname + '?track=' + currentOrderId;
+  if (navigator.share) {
+    navigator.share({ title: 'Status Pesanan NURI SNACK', url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => toast('🔗 Link berhasil disalin!'));
+  }
+};
+
+window.newOrder = function() {
+  if (statusUnsub) { statusUnsub(); statusUnsub = null; }
+  currentOrderId = null;
+  goTo('scrMenu');
+};
+</script>
+</body>
+</html>
