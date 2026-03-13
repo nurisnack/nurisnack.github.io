@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nuri Snack">
 <meta name="theme-color" content="#2E9E4F">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Nuri Snack</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
 <style>
@@ -6726,45 +6728,19 @@ function formatNotifTime(ts) {
 }
 
 // ══════════════════════════════════════════
-// 📲 PWA — MANIFEST + SERVICE WORKER
+// 📲 PWA — SERVICE WORKER & INSTALL PROMPT
 // ══════════════════════════════════════════
-(function() {
-  // Buat manifest dinamis dan inject ke <head>
-  var manifest = {
-    name: 'Nuri Snack',
-    short_name: 'Nuri Snack',
-    description: 'Pesan cemilan favoritmu dari Nuri Snack',
-    start_url: './',
-    display: 'standalone',
-    background_color: '#F2FBF5',
-    theme_color: '#2E9E4F',
-    orientation: 'portrait',
-    icons: [
-      { src: 'https://i.ibb.co/0jQkg0j/nuri-icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: 'https://i.ibb.co/0jQkg0j/nuri-icon-512.png', sizes: '512x512', type: 'image/png' }
-    ]
-  };
-  var blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-  var url  = URL.createObjectURL(blob);
-  var link = document.createElement('link');
-  link.rel = 'manifest'; link.href = url;
-  document.head.appendChild(link);
 
-  // Daftarkan Service Worker minimal (agar PWA installable)
-  if ('serviceWorker' in navigator) {
-    var swCode =
-      'self.addEventListener("install", function(e){ self.skipWaiting(); });\n' +
-      'self.addEventListener("activate", function(e){ e.waitUntil(clients.claim()); });\n' +
-      'self.addEventListener("fetch", function(e){});';
-    var swBlob = new Blob([swCode], { type: 'text/javascript' });
-    var swUrl  = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl).catch(function(){});
-  }
-})();
+// Daftarkan Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.warn('SW failed:', err); });
+  });
+}
 
-// ══════════════════════════════════════════
-// 📲 TOMBOL INSTALL PWA
-// ══════════════════════════════════════════
+// ── Tombol Install ──
 var _pwaPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
@@ -6772,7 +6748,6 @@ window.addEventListener('beforeinstallprompt', function(e) {
   var btn = document.getElementById('pwa-install-btn');
   if (btn) {
     btn.style.display = 'flex';
-    // Auto-sembunyikan setelah 15 detik jika tidak diklik
     setTimeout(function() {
       if (btn.style.display !== 'none') {
         btn.style.animation = 'slideInRight 0.4s reverse forwards';
@@ -6792,9 +6767,8 @@ window.addEventListener('appinstalled', function() {
 function triggerPwaInstall() {
   if (!_pwaPrompt) return;
   _pwaPrompt.prompt();
-  _pwaPrompt.userChoice.then(function(result) {
-    var btn = document.getElementById('pwa-install-btn');
-    if (btn) btn.style.display = 'none';
+  _pwaPrompt.userChoice.then(function() {
+    document.getElementById('pwa-install-btn').style.display = 'none';
     _pwaPrompt = null;
   });
 }
@@ -6804,14 +6778,13 @@ function triggerPwaInstall() {
 // ══════════════════════════════════════════
 (function() {
   var startY = 0, pulling = false, refreshing = false;
-  var threshold = 80; // px harus ditarik sebelum refresh
+  var threshold = 80;
 
   var indicator = document.getElementById('ptr-indicator');
   var spinner   = document.getElementById('ptr-spinner');
   var ptrText   = document.getElementById('ptr-text');
 
   function getScrollTop() {
-    // Cari elemen scroll yang aktif di halaman yang sedang tampil
     var activePage = document.querySelector('.page.active');
     if (activePage) {
       var scroll = activePage.querySelector('.page-scroll');
@@ -6822,7 +6795,7 @@ function triggerPwaInstall() {
 
   document.addEventListener('touchstart', function(e) {
     if (refreshing) return;
-    if (getScrollTop() > 0) return; // Hanya aktif saat di atas
+    if (getScrollTop() > 0) return;
     startY = e.touches[0].clientY;
     pulling = true;
   }, { passive: true });
@@ -6832,14 +6805,10 @@ function triggerPwaInstall() {
     var dist = e.touches[0].clientY - startY;
     if (dist <= 0) { pulling = false; return; }
     if (getScrollTop() > 0) { pulling = false; return; }
-
     var progress = Math.min(dist / threshold, 1);
     if (dist > 10) {
       indicator.classList.add('ptr-pulling');
-      var arrows = Math.floor(progress * 3) + 1;
-      ptrText.textContent = progress >= 1
-        ? '↑ Lepaskan untuk memperbarui'
-        : '↓ Tarik untuk memperbarui';
+      ptrText.textContent = progress >= 1 ? '↑ Lepaskan untuk memperbarui' : '↓ Tarik untuk memperbarui';
       spinner.style.display = 'none';
     }
   }, { passive: true });
@@ -6848,9 +6817,7 @@ function triggerPwaInstall() {
     if (!pulling || refreshing) return;
     pulling = false;
     var dist = e.changedTouches[0].clientY - startY;
-
     if (dist >= threshold) {
-      // Trigger refresh
       refreshing = true;
       indicator.classList.remove('ptr-pulling');
       indicator.classList.add('ptr-refreshing');
