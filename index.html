@@ -2793,6 +2793,9 @@ function renderOrderList() {
     ? adminOrders
     : adminOrders.filter(function(o){ return o.status === adminOrderFilter; });
 
+  // Cache semua order untuk invoice
+  adminOrders.forEach(function(o) { _invoiceCache[o.id] = o; });
+
   if (adminOrders.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:60px 24px;">' +
       '<div style="font-size:52px;opacity:0.3;">📭</div>' +
@@ -2976,7 +2979,7 @@ function renderOrderList() {
           (actionBtns ? '<div style="display:flex;gap:8px;flex-wrap:wrap;">' + actionBtns + '</div>' : '') +
           // Invoice button (untuk pesanan Selesai)
           (o.status === 'Selesai' ?
-            '<button onclick="event.stopPropagation();showInvoice(' + JSON.stringify(o).replace(/'/g,"&#39;") + ',\'' + o.id + '\')" ' +
+            '<button onclick="event.stopPropagation();showInvoiceById(\'' + o.id + '\')" ' +
               'style="width:100%;margin-top:8px;padding:9px;border-radius:12px;border:1.5px solid #2E9E4F;' +
               'background:white;color:#2E9E4F;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;' +
               'cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">' +
@@ -5036,6 +5039,8 @@ function renderOrders() {
       docs.forEach(function(item) {
         var id    = item.id;
         var o     = item.data;
+        // Cache untuk invoice
+        _invoiceCache[id] = Object.assign({ id: id }, o);
         var color = STATUS_COLOR[o.status] || '#888';
         var icon  = STATUS_ICON[o.status]  || '📦';
         var date  = o.createdAt ? new Date(o.createdAt.seconds * 1000).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
@@ -5179,7 +5184,7 @@ function renderOrders() {
                     '🔁 Pesan Lagi' +
                   '</button>' +
                   (o.status === 'Selesai' ?
-                    '<button onclick="showInvoice(' + JSON.stringify(Object.assign({}, o, {customerName: (typeof currentUser==='object'?currentUser.name:''), customerPhone: (typeof currentUser==='object'?currentUser.phone:'')})).replace(/'/g,"&#39;") + ',\'' + id + '\')" ' +
+                    '<button onclick="showInvoiceById(\'' + id + '\')" ' +
                       'style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;' +
                       'background:white;border:1.5px solid #2E9E4F;color:#2E9E4F;' +
                       'border-radius:12px;padding:11px;font-family:Nunito,sans-serif;font-size:13px;' +
@@ -7674,6 +7679,33 @@ async function exportExcel() {
 // ══════════════════════════════════════════
 // 🧾 INVOICE
 // ══════════════════════════════════════════
+
+// Cache data pesanan untuk invoice (key = orderId)
+var _invoiceCache = {};
+
+function showInvoiceById(orderId) {
+  // Coba dari cache dulu
+  if (_invoiceCache[orderId]) {
+    showInvoice(_invoiceCache[orderId], orderId);
+    return;
+  }
+  // Kalau tidak ada, ambil dari Firestore
+  var idEl = document.getElementById('invoice-id');
+  if (idEl) idEl.textContent = 'Memuat...';
+  document.getElementById('invoice-modal').style.display = 'flex';
+  document.getElementById('invoice-content').innerHTML =
+    '<div style="text-align:center;padding:40px;color:#aaa;">⏳ Memuat invoice...</div>';
+
+  db.collection('orders').doc(orderId).get().then(function(doc) {
+    if (!doc.exists) { toast('❌ Pesanan tidak ditemukan'); closeInvoiceModal(); return; }
+    var o = Object.assign({ id: doc.id }, doc.data());
+    _invoiceCache[orderId] = o;
+    showInvoice(o, orderId);
+  }).catch(function(err) {
+    toast('❌ Gagal memuat invoice: ' + err.message);
+    closeInvoiceModal();
+  });
+}
 
 function showInvoice(o, orderId) {
   if (typeof o === 'string') { try { o = JSON.parse(o); } catch(e) { return; } }
